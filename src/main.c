@@ -6,7 +6,6 @@
 #include "volt/error.h"
 
 int32_t main(int32_t argc, char** argv) {
-    volt_fmt_disable_level(VOLT_FMT_LEVEL_INFO);
     volt_cmd_args_t args = {0};
     volt_cmd_args_init(&args, (uint32_t) argc, argv);
 

@@ -49,13 +49,15 @@ static volt_fmt_level_t* _volt_fmt_get_enabled(void) {
 
     if (!inited) {
         inited = true;
-#ifdef VOLT_ENABLE_TRACE
+#if defined(VOLT_ENABLE_TRACE)
         enabled |= VOLT_FMT_LEVE_TRACE;
 #endif
-#if defined(DEBUG) || defined(VOLT_ENABLE_DEBUG)
+#if (defined(DEBUG) || defined(VOLT_ENABLE_DEBUG)) && !defined(VOLT_NO_DEBUG_LOGS)
         enabled |= VOLT_FMT_LEVEL_DEBUG;
 #endif
+#if !defined(VOLT_NO_INFO_LOGS)
         enabled |= VOLT_FMT_LEVEL_INFO;
+#endif
         enabled |= VOLT_FMT_LEVEL_WARN;
         enabled |= VOLT_FMT_LEVEL_ERROR;
     }
