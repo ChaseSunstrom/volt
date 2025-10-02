@@ -331,6 +331,54 @@ src/util/fmt.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/volt.dir/build.make CMakeFiles/volt.dir/src/util/fmt.c.s
 .PHONY : src/util/fmt.c.s
 
+src/util/memory/allocator.o: src/util/memory/allocator.c.o
+.PHONY : src/util/memory/allocator.o
+
+# target to build an object file
+src/util/memory/allocator.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/volt.dir/build.make CMakeFiles/volt.dir/src/util/memory/allocator.c.o
+.PHONY : src/util/memory/allocator.c.o
+
+src/util/memory/allocator.i: src/util/memory/allocator.c.i
+.PHONY : src/util/memory/allocator.i
+
+# target to preprocess a source file
+src/util/memory/allocator.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/volt.dir/build.make CMakeFiles/volt.dir/src/util/memory/allocator.c.i
+.PHONY : src/util/memory/allocator.c.i
+
+src/util/memory/allocator.s: src/util/memory/allocator.c.s
+.PHONY : src/util/memory/allocator.s
+
+# target to generate assembly for a file
+src/util/memory/allocator.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/volt.dir/build.make CMakeFiles/volt.dir/src/util/memory/allocator.c.s
+.PHONY : src/util/memory/allocator.c.s
+
+src/util/types/vector.o: src/util/types/vector.c.o
+.PHONY : src/util/types/vector.o
+
+# target to build an object file
+src/util/types/vector.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/volt.dir/build.make CMakeFiles/volt.dir/src/util/types/vector.c.o
+.PHONY : src/util/types/vector.c.o
+
+src/util/types/vector.i: src/util/types/vector.c.i
+.PHONY : src/util/types/vector.i
+
+# target to preprocess a source file
+src/util/types/vector.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/volt.dir/build.make CMakeFiles/volt.dir/src/util/types/vector.c.i
+.PHONY : src/util/types/vector.c.i
+
+src/util/types/vector.s: src/util/types/vector.c.s
+.PHONY : src/util/types/vector.s
+
+# target to generate assembly for a file
+src/util/types/vector.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/volt.dir/build.make CMakeFiles/volt.dir/src/util/types/vector.c.s
+.PHONY : src/util/types/vector.c.s
+
 src/volt/volt.o: src/volt/volt.c.o
 .PHONY : src/volt/volt.o
 
@@ -386,6 +434,12 @@ help:
 	@echo "... src/util/fmt.o"
 	@echo "... src/util/fmt.i"
 	@echo "... src/util/fmt.s"
+	@echo "... src/util/memory/allocator.o"
+	@echo "... src/util/memory/allocator.i"
+	@echo "... src/util/memory/allocator.s"
+	@echo "... src/util/types/vector.o"
+	@echo "... src/util/types/vector.i"
+	@echo "... src/util/types/vector.s"
 	@echo "... src/volt/volt.o"
 	@echo "... src/volt/volt.i"
 	@echo "... src/volt/volt.s"

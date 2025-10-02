@@ -10,6 +10,9 @@ extern "C" {
 typedef float  float32_t;
 typedef double float64_t;
 
+typedef enum volt_status_code_t volt_status_code_t;
+enum volt_status_code_t { VOLT_SUCCESS = 1, VOLT_FAILURE = 0 };
+
 #ifdef __cplusplus
 }
 #endif

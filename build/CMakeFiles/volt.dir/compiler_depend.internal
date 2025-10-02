@@ -86,7 +86,9 @@ CMakeFiles/volt.dir/src/main.c.o
  /home/chase/Projects/C/Volt/build/CMakeFiles/volt.dir/cmake_pch.h
  /home/chase/Projects/C/Volt/include/pch.h
  /home/chase/Projects/C/Volt/include/util/fmt.h
+ /home/chase/Projects/C/Volt/include/util/memory/allocator.h
  /home/chase/Projects/C/Volt/include/util/types/types.h
+ /home/chase/Projects/C/Volt/include/util/types/vector.h
  /home/chase/Projects/C/Volt/include/volt/error.h
  /home/chase/Projects/C/Volt/include/volt/volt.h
  /home/chase/Projects/C/Volt/src/main.c
@@ -116,6 +118,15 @@ CMakeFiles/volt.dir/src/util/fmt.c.o
  /usr/include/stdc-predef.h
  /usr/include/unistd.h
  /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/stddef.h
+
+CMakeFiles/volt.dir/src/util/types/vector.c.o
+ /home/chase/Projects/C/Volt/build/CMakeFiles/volt.dir/cmake_pch.h
+ /home/chase/Projects/C/Volt/include/pch.h
+ /home/chase/Projects/C/Volt/include/util/memory/allocator.h
+ /home/chase/Projects/C/Volt/include/util/types/types.h
+ /home/chase/Projects/C/Volt/include/util/types/vector.h
+ /home/chase/Projects/C/Volt/src/util/types/vector.c
+ /usr/include/stdc-predef.h
 
 CMakeFiles/volt.dir/src/volt/volt.c.o
  /home/chase/Projects/C/Volt/build/CMakeFiles/volt.dir/cmake_pch.h
@@ -155,5 +166,6 @@ volt
  /home/chase/Projects/C/Volt/build/CMakeFiles/volt.dir/src/main.c.o
  /home/chase/Projects/C/Volt/build/CMakeFiles/volt.dir/src/parser/parser.c.o
  /home/chase/Projects/C/Volt/build/CMakeFiles/volt.dir/src/util/fmt.c.o
+ /home/chase/Projects/C/Volt/build/CMakeFiles/volt.dir/src/util/types/vector.c.o
  /home/chase/Projects/C/Volt/build/CMakeFiles/volt.dir/src/volt/volt.c.o
 

@@ -3,6 +3,7 @@
 #include <volt/volt.h>
 
 #include "util/fmt.h"
+#include "util/types/vector.h"
 #include "volt/error.h"
 
 int32_t main(int32_t argc, char** argv) {
@@ -23,6 +24,21 @@ int32_t main(int32_t argc, char** argv) {
     volt_compile(&compiler);
     volt_link(&compiler);
     vold_deinit(&compiler);
+
+    /* testing stuff lol
+    volt_vector_t vector = volt_vector_default();
+
+    for (size_t i = 0; i < 100; i++) {
+        volt_vector_push_back(&vector, (void*) i);
+    }
+
+    for (size_t i = 0; i < 100; i++) {
+        int32_t j = (int32_t) volt_vector_get(&vector, i);
+        volt_fmt_logf(VOLT_FMT_LEVEL_INFO, "Item: {i32}", j);
+    }
+
+    volt_vector_deinit(&vector);
+    */
 
     return 0;
 }

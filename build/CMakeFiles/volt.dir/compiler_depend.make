@@ -83,7 +83,9 @@ CMakeFiles/volt.dir/src/lexer/lexer.c.o: CMakeFiles/volt.dir/cmake_pch.h \
 CMakeFiles/volt.dir/src/main.c.o: CMakeFiles/volt.dir/cmake_pch.h \
   /home/chase/Projects/C/Volt/include/pch.h \
   /home/chase/Projects/C/Volt/include/util/fmt.h \
+  /home/chase/Projects/C/Volt/include/util/memory/allocator.h \
   /home/chase/Projects/C/Volt/include/util/types/types.h \
+  /home/chase/Projects/C/Volt/include/util/types/vector.h \
   /home/chase/Projects/C/Volt/include/volt/error.h \
   /home/chase/Projects/C/Volt/include/volt/volt.h \
   /home/chase/Projects/C/Volt/src/main.c \
@@ -111,6 +113,14 @@ CMakeFiles/volt.dir/src/util/fmt.c.o: CMakeFiles/volt.dir/cmake_pch.h \
   /usr/include/stdc-predef.h \
   /usr/include/unistd.h \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/stddef.h
+
+CMakeFiles/volt.dir/src/util/types/vector.c.o: CMakeFiles/volt.dir/cmake_pch.h \
+  /home/chase/Projects/C/Volt/include/pch.h \
+  /home/chase/Projects/C/Volt/include/util/memory/allocator.h \
+  /home/chase/Projects/C/Volt/include/util/types/types.h \
+  /home/chase/Projects/C/Volt/include/util/types/vector.h \
+  /home/chase/Projects/C/Volt/src/util/types/vector.c \
+  /usr/include/stdc-predef.h
 
 CMakeFiles/volt.dir/src/volt/volt.c.o: CMakeFiles/volt.dir/cmake_pch.h \
   /home/chase/Projects/C/Volt/include/pch.h \
@@ -148,6 +158,7 @@ volt: /usr/lib/Scrt1.o \
   CMakeFiles/volt.dir/src/main.c.o \
   CMakeFiles/volt.dir/src/parser/parser.c.o \
   CMakeFiles/volt.dir/src/util/fmt.c.o \
+  CMakeFiles/volt.dir/src/util/types/vector.c.o \
   CMakeFiles/volt.dir/src/volt/volt.c.o
 
 
@@ -201,6 +212,8 @@ CMakeFiles/volt.dir/src/lexer/lexer.c.o:
 
 /home/chase/Projects/C/Volt/include/volt/error.h:
 
+/home/chase/Projects/C/Volt/include/util/types/vector.h:
+
 /usr/lib/libedit.so.0:
 
 /home/chase/Projects/C/Volt/src/lexer/lexer.c:
@@ -241,6 +254,8 @@ CMakeFiles/volt.dir/src/lexer/lexer.c.o:
 
 /home/chase/Projects/C/Volt/include/util/defines.h:
 
+/home/chase/Projects/C/Volt/src/util/types/vector.c:
+
 /usr/include/bits/struct_mutex.h:
 
 /usr/include/gnu/stubs-64.h:
@@ -254,6 +269,8 @@ CMakeFiles/volt.dir/src/main.c.o:
 /usr/include/features-time64.h:
 
 /usr/include/bits/long-double.h:
+
+CMakeFiles/volt.dir/src/util/types/vector.c.o:
 
 /usr/include/bits/pthreadtypes.h:
 
@@ -326,6 +343,8 @@ CMakeFiles/volt.dir/cmake_pch.h:
 /usr/include/bits/types.h:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtendS.o:
+
+/home/chase/Projects/C/Volt/include/util/memory/allocator.h:
 
 /usr/include/bits/types/FILE.h:
 

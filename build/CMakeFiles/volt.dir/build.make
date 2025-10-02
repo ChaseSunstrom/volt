@@ -151,12 +151,44 @@ CMakeFiles/volt.dir/src/util/fmt.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/volt.dir/src/util/fmt.c.s"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -Winvalid-pch -include /home/chase/Projects/C/Volt/build/CMakeFiles/volt.dir/cmake_pch.h -S /home/chase/Projects/C/Volt/src/util/fmt.c -o CMakeFiles/volt.dir/src/util/fmt.c.s
 
+CMakeFiles/volt.dir/src/util/memory/allocator.c.o: CMakeFiles/volt.dir/flags.make
+CMakeFiles/volt.dir/src/util/memory/allocator.c.o: /home/chase/Projects/C/Volt/src/util/memory/allocator.c
+CMakeFiles/volt.dir/src/util/memory/allocator.c.o: CMakeFiles/volt.dir/cmake_pch.h
+CMakeFiles/volt.dir/src/util/memory/allocator.c.o: CMakeFiles/volt.dir/cmake_pch.h.gch
+CMakeFiles/volt.dir/src/util/memory/allocator.c.o: CMakeFiles/volt.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/chase/Projects/C/Volt/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building C object CMakeFiles/volt.dir/src/util/memory/allocator.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -Winvalid-pch -include /home/chase/Projects/C/Volt/build/CMakeFiles/volt.dir/cmake_pch.h -MD -MT CMakeFiles/volt.dir/src/util/memory/allocator.c.o -MF CMakeFiles/volt.dir/src/util/memory/allocator.c.o.d -o CMakeFiles/volt.dir/src/util/memory/allocator.c.o -c /home/chase/Projects/C/Volt/src/util/memory/allocator.c
+
+CMakeFiles/volt.dir/src/util/memory/allocator.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/volt.dir/src/util/memory/allocator.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -Winvalid-pch -include /home/chase/Projects/C/Volt/build/CMakeFiles/volt.dir/cmake_pch.h -E /home/chase/Projects/C/Volt/src/util/memory/allocator.c > CMakeFiles/volt.dir/src/util/memory/allocator.c.i
+
+CMakeFiles/volt.dir/src/util/memory/allocator.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/volt.dir/src/util/memory/allocator.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -Winvalid-pch -include /home/chase/Projects/C/Volt/build/CMakeFiles/volt.dir/cmake_pch.h -S /home/chase/Projects/C/Volt/src/util/memory/allocator.c -o CMakeFiles/volt.dir/src/util/memory/allocator.c.s
+
+CMakeFiles/volt.dir/src/util/types/vector.c.o: CMakeFiles/volt.dir/flags.make
+CMakeFiles/volt.dir/src/util/types/vector.c.o: /home/chase/Projects/C/Volt/src/util/types/vector.c
+CMakeFiles/volt.dir/src/util/types/vector.c.o: CMakeFiles/volt.dir/cmake_pch.h
+CMakeFiles/volt.dir/src/util/types/vector.c.o: CMakeFiles/volt.dir/cmake_pch.h.gch
+CMakeFiles/volt.dir/src/util/types/vector.c.o: CMakeFiles/volt.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/chase/Projects/C/Volt/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building C object CMakeFiles/volt.dir/src/util/types/vector.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -Winvalid-pch -include /home/chase/Projects/C/Volt/build/CMakeFiles/volt.dir/cmake_pch.h -MD -MT CMakeFiles/volt.dir/src/util/types/vector.c.o -MF CMakeFiles/volt.dir/src/util/types/vector.c.o.d -o CMakeFiles/volt.dir/src/util/types/vector.c.o -c /home/chase/Projects/C/Volt/src/util/types/vector.c
+
+CMakeFiles/volt.dir/src/util/types/vector.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/volt.dir/src/util/types/vector.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -Winvalid-pch -include /home/chase/Projects/C/Volt/build/CMakeFiles/volt.dir/cmake_pch.h -E /home/chase/Projects/C/Volt/src/util/types/vector.c > CMakeFiles/volt.dir/src/util/types/vector.c.i
+
+CMakeFiles/volt.dir/src/util/types/vector.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/volt.dir/src/util/types/vector.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -Winvalid-pch -include /home/chase/Projects/C/Volt/build/CMakeFiles/volt.dir/cmake_pch.h -S /home/chase/Projects/C/Volt/src/util/types/vector.c -o CMakeFiles/volt.dir/src/util/types/vector.c.s
+
 CMakeFiles/volt.dir/src/volt/volt.c.o: CMakeFiles/volt.dir/flags.make
 CMakeFiles/volt.dir/src/volt/volt.c.o: /home/chase/Projects/C/Volt/src/volt/volt.c
 CMakeFiles/volt.dir/src/volt/volt.c.o: CMakeFiles/volt.dir/cmake_pch.h
 CMakeFiles/volt.dir/src/volt/volt.c.o: CMakeFiles/volt.dir/cmake_pch.h.gch
 CMakeFiles/volt.dir/src/volt/volt.c.o: CMakeFiles/volt.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/chase/Projects/C/Volt/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building C object CMakeFiles/volt.dir/src/volt/volt.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/chase/Projects/C/Volt/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building C object CMakeFiles/volt.dir/src/volt/volt.c.o"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -Winvalid-pch -include /home/chase/Projects/C/Volt/build/CMakeFiles/volt.dir/cmake_pch.h -MD -MT CMakeFiles/volt.dir/src/volt/volt.c.o -MF CMakeFiles/volt.dir/src/volt/volt.c.o.d -o CMakeFiles/volt.dir/src/volt/volt.c.o -c /home/chase/Projects/C/Volt/src/volt/volt.c
 
 CMakeFiles/volt.dir/src/volt/volt.c.i: cmake_force
@@ -173,6 +205,8 @@ volt_OBJECTS = \
 "CMakeFiles/volt.dir/src/main.c.o" \
 "CMakeFiles/volt.dir/src/parser/parser.c.o" \
 "CMakeFiles/volt.dir/src/util/fmt.c.o" \
+"CMakeFiles/volt.dir/src/util/memory/allocator.c.o" \
+"CMakeFiles/volt.dir/src/util/types/vector.c.o" \
 "CMakeFiles/volt.dir/src/volt/volt.c.o"
 
 # External object files for target volt
@@ -183,12 +217,14 @@ volt: CMakeFiles/volt.dir/src/lexer/lexer.c.o
 volt: CMakeFiles/volt.dir/src/main.c.o
 volt: CMakeFiles/volt.dir/src/parser/parser.c.o
 volt: CMakeFiles/volt.dir/src/util/fmt.c.o
+volt: CMakeFiles/volt.dir/src/util/memory/allocator.c.o
+volt: CMakeFiles/volt.dir/src/util/types/vector.c.o
 volt: CMakeFiles/volt.dir/src/volt/volt.c.o
 volt: CMakeFiles/volt.dir/build.make
 volt: CMakeFiles/volt.dir/compiler_depend.ts
 volt: /usr/lib/libLLVM.so.20.1
 volt: CMakeFiles/volt.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/chase/Projects/C/Volt/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Linking C executable volt"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/chase/Projects/C/Volt/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Linking C executable volt"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/volt.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

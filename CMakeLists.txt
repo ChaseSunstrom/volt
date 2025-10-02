@@ -45,6 +45,8 @@ target_compile_options(
     -Wconversion
     -Wno-format-nonliteral # otherwise this will bitch that the fmt.c file is
                            # naughty
+    -Wno-int-to-pointer-cast
+    -Wno-pointer-to-int-cast
     -Wsign-conversion
     -Wimplicit-fallthrough
     -Werror=return-type
