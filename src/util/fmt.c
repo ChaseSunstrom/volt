@@ -43,11 +43,12 @@ static const char* col(bool on, const char* esc) {
     return on ? esc : "";
 }
 
-static inline volt_fmt_level_t* _volt_fmt_get_enabled(void) {
+static volt_fmt_level_t* _volt_fmt_get_enabled(void) {
     static bool             inited  = false;
     static volt_fmt_level_t enabled = 0;
 
     if (!inited) {
+        inited = true;
 #ifdef VOLT_ENABLE_TRACE
         enabled |= VOLT_FMT_LEVE_TRACE;
 #endif
@@ -72,7 +73,7 @@ static inline volt_fmt_level_t* _volt_fmt_get_enabled(void) {
 //   {f:.N}         -> double with N precision (e.g. {f:.3})
 //   {{ / }}        -> literal { / }
 // Unknown/missing tokens are printed verbatim like "{...}".
-static void brace_vprint(FILE* out, const char* fmt, va_list ap) {
+static void _volt_fmt_brace_vprint(FILE* out, const char* fmt, va_list ap) {
     for (const char* p = fmt; *p; ++p) {
         if (*p != '{' && *p != '}') {
             fputc(*p, out);
@@ -171,15 +172,19 @@ static void brace_vprint(FILE* out, const char* fmt, va_list ap) {
 }
 
 static inline void _volt_fmt_log_v(volt_fmt_level_t lv, const char* fmt, va_list ap) {
-    volt_fmt_level_t enabled = *_volt_fmt_get_enabled();
+    static bool inited = false, color = false;
+
+    static volt_fmt_level_t enabled =
+        0;  // Requires all flags to be known before this function runs
+
+    if (!inited) {
+        inited  = true;
+        enabled = *_volt_fmt_get_enabled();
+        color   = _volt_fmt_enable_color(stderr);
+    }
+
     if (!(enabled & lv))
         return;
-
-    static bool inited = false, color = false;
-    if (!inited) {
-        color  = _volt_fmt_enable_color(stderr);
-        inited = true;
-    }
 
     const char *tag = "INFO", *pref = "", *suf = col(color, C_RESET);
     switch (lv) {
@@ -206,7 +211,7 @@ static inline void _volt_fmt_log_v(volt_fmt_level_t lv, const char* fmt, va_list
     }
 
     fprintf(stderr, "%s[%s]%s ", pref, tag, suf);
-    brace_vprint(stderr, fmt, ap);
+    _volt_fmt_brace_vprint(stderr, fmt, ap);
     fputc('\n', stderr);
 }
 

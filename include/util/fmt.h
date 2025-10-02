@@ -1,7 +1,7 @@
 #ifndef __VOLT_FMT_H__
 #define __VOLT_FMT_H__
 
-#include <util/array.h>
+#include <util/types/array.h>
 
 #ifdef __cplusplus
 extern "C" {

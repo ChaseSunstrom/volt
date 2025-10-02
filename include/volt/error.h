@@ -1,8 +1,7 @@
 #ifndef __VOLT_ERROR_H__
 #define __VOLT_ERROR_H__
 
-#include <stdint.h>
-#include <util/types.h>
+#include <util/types/types.h>
 
 #ifdef __cplusplus
 extern "C" {

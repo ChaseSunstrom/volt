@@ -1,7 +1,7 @@
 #ifndef __VOLT_ARRAY_H__
 #define __VOLT_ARRAY_H__
 
-#include <util/types.h>
+#include <util/types/types.h>
 
 #ifdef __cplusplus
 extern "C" {

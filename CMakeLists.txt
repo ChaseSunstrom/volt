@@ -87,6 +87,10 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   )
 endif()
 
+option(VOLT_USE_MSVC "Enable VOLT_USE_MSVC" OFF)
+target_compile_definitions(${PROJECT_NAME}
+                           PRIVATE $<$<BOOL:${VOLT_USE_MSVC}>:VOLT_USE_MSVC=1>)
+
 # MSVC: address sanitizer (VS 2019+), runtime checks
 if(MSVC AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_options(${PROJECT_NAME} PRIVATE /fsanitize=address /RTC1 /sdl)

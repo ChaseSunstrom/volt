@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/chase/Projects/C/Volt/build/_deps/tomlplusplus-subbuild/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
