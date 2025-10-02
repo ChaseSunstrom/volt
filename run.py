@@ -18,6 +18,6 @@ for line in cache.splitlines():
         project_name = line.split("=", 1)[1]
 
 if sys.platform == "win32":
-    subprocess.run(f".\\build\\{project_name}.exe", shell=True)
+    subprocess.run(f".\\build\\{project_name}.exe test.volt -o test.obj", shell=True)
 else:
-    subprocess.run(f"./build/{project_name}", shell=True)
+    subprocess.run(f"./build/{project_name} test.volt -o test.o", shell=True)

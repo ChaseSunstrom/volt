@@ -1,1 +1,0 @@
-/usr/bin/cc -Wl,--dependency-file=CMakeFiles/volt.dir/link.d CMakeFiles/volt.dir/src/main.c.o CMakeFiles/volt.dir/src/util/fmt.c.o CMakeFiles/volt.dir/src/volt/volt.c.o -o volt  /usr/lib/libLLVM.so.20.1

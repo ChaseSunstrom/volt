@@ -17,13 +17,15 @@ SpaceBeforeAssignmentOperators: true
 SpaceBeforeRangeBasedForLoopColon: true
 SpaceBeforeCtorInitializerColon: true
 SpaceBeforeInheritanceColon: true
+IndentExternBlock: NoIndent        # NEW: do not indent inside extern "C" { ... }
 
 # Braces
-BreakBeforeBraces: Allman
+BreakBeforeBraces: Attach          # CHANGED: put braces on the same line
 AllowShortBlocksOnASingleLine: false
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
+AlwaysBreakAfterReturnType: None   # Helps keep decl + brace on one line when possible
 
 # Alignment
 AlignConsecutiveAssignments: true
