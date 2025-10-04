@@ -1,6 +1,7 @@
 #ifndef __VOLT_VOLT_H__
 #define __VOLT_VOLT_H__
 
+#include <lexer/lexer.h>
 #include <volt/error.h>
 
 #ifdef __cplusplus
@@ -14,19 +15,22 @@ struct volt_cmd_args_t {
     const char*** parsed_args;
     const char**  input_files;
     const char**  output_files;
+    size_t        input_count;
+    size_t        output_count;
 };
 
 typedef struct volt_compiler_t volt_compiler_t;
 struct volt_compiler_t {
     volt_cmd_args_t      args;
     volt_error_handler_t error_handler;
+    volt_lexer_t*        lexers;
 };
 
 int32_t volt_cmd_args_init(volt_cmd_args_t*, uint32_t, char**);
 int32_t volt_cmd_args_deinit(volt_cmd_args_t*);
 
 int32_t volt_init(volt_compiler_t*);
-int32_t vold_deinit(volt_compiler_t*);
+int32_t volt_deinit(volt_compiler_t*);
 int32_t volt_lex(volt_compiler_t*);
 int32_t volt_parse(volt_compiler_t*);
 int32_t volt_build_ast(volt_compiler_t*);

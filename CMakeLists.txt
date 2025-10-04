@@ -37,7 +37,7 @@ target_compile_options(
     $<$<AND:$<C_COMPILER_ID:GNU,Clang,AppleClang>>:
     -Wall
     -Wextra
-    -Wpedantic
+    # -Wpedantic
     -Wformat=2
     -Wnull-dereference
     -Wvla

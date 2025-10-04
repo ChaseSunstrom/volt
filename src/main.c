@@ -23,7 +23,7 @@ int32_t main(int32_t argc, char** argv) {
     volt_analyze(&compiler);
     volt_compile(&compiler);
     volt_link(&compiler);
-    vold_deinit(&compiler);
+    volt_deinit(&compiler);
 
     /* testing stuff lol
     volt_vector_t vector = volt_vector_default();

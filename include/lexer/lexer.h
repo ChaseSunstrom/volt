@@ -10,9 +10,13 @@ extern "C" {
 
 typedef struct volt_lexer_t volt_lexer_t;
 struct volt_lexer_t {
-    const char*    input_stream;
-    volt_vector_t* tokens;
+    const char*   input_stream;
+    volt_vector_t tokens;
 };
+
+int32_t volt_lexer_init(volt_lexer_t*);
+int32_t volt_lexer_deinit(volt_lexer_t*);
+int32_t volt_lexer_lex(volt_lexer_t*);
 
 #ifdef __cplusplus
 }
