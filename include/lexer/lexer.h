@@ -2,6 +2,7 @@
 #define __VOLT_LEXER_H__
 
 #include <util/types/types.h>
+#include <util/types/vector.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -9,7 +10,8 @@ extern "C" {
 
 typedef struct volt_lexer_t volt_lexer_t;
 struct volt_lexer_t {
-    const char* input_stream;
+    const char*    input_stream;
+    volt_vector_t* tokens;
 };
 
 #ifdef __cplusplus
