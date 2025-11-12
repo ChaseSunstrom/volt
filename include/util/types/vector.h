@@ -18,16 +18,16 @@ struct volt_vector_t {
     volt_allocator_t* item_allocator;
 };
 
-volt_vector_t volt_vector_default(void);
-int32_t       volt_vector_init(volt_vector_t*);
-int32_t       volt_vector_deinit(volt_vector_t*);
-int32_t       volt_vector_push_back(volt_vector_t*, void*);
-int32_t       volt_vector_pop_back(volt_vector_t*);
-int32_t       volt_vector_insert(volt_vector_t*, size_t, void*);
-int32_t       volt_vector_remove(volt_vector_t*, size_t);
-int32_t       volt_vector_ensure(volt_vector_t*, size_t);
-void*         volt_vector_get(volt_vector_t*, size_t);
-void*         volt_vector_get_back(volt_vector_t*);
+volt_vector_t      volt_vector_default(void);
+volt_status_code_t volt_vector_init(volt_vector_t*);
+volt_status_code_t volt_vector_deinit(volt_vector_t*);
+volt_status_code_t volt_vector_push_back(volt_vector_t*, void*);
+volt_status_code_t volt_vector_pop_back(volt_vector_t*);
+volt_status_code_t volt_vector_insert(volt_vector_t*, size_t, void*);
+volt_status_code_t volt_vector_remove(volt_vector_t*, size_t);
+volt_status_code_t volt_vector_ensure(volt_vector_t*, size_t);
+void*              volt_vector_get(volt_vector_t*, size_t);
+void*              volt_vector_get_back(volt_vector_t*);
 
 #ifdef __cplusplus
 }

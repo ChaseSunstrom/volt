@@ -8,7 +8,7 @@
 
 // Expects argv like: prog <in1> <in2> ... -o <out1> <out2> ...
 static inline char*** _volt_fmt_cmd_args(uint32_t argc, char** argv, size_t* o_input_count,
-                                         size_t* o_output_count) {
+                                         size_t* o_output_count, volt_allocator_t* allocator) {
     (void) argc;
     size_t i = 1;
     while (argv[i] && argv[i][0] != '-')
@@ -31,9 +31,9 @@ static inline char*** _volt_fmt_cmd_args(uint32_t argc, char** argv, size_t* o_i
         exit(EXIT_FAILURE);
     }
 
-    char*** out = malloc(sizeof(char**) * 2);
-    out[0]      = malloc(sizeof(char*) * inputs);
-    out[1]      = malloc(sizeof(char*) * outputs);
+    char*** out = allocator->malloc(sizeof(char**) * 2);
+    out[0]      = allocator->malloc(sizeof(char*) * inputs);
+    out[1]      = allocator->malloc(sizeof(char*) * outputs);
     for (size_t k = 0; k < inputs; k++)
         out[0][k] = argv[1 + k];
     for (size_t k = 0; k < outputs; k++)
@@ -44,7 +44,7 @@ static inline char*** _volt_fmt_cmd_args(uint32_t argc, char** argv, size_t* o_i
     return out;
 }
 
-static inline const char* _volt_read_file(const char* path) {
+static inline const char* _volt_read_file(const char* path, volt_allocator_t* allocator) {
     FILE*    fp;
     uint32_t fsize;
     char*    buffer;
@@ -60,7 +60,7 @@ static inline const char* _volt_read_file(const char* path) {
     rewind(fp);                    // Go back to beginning
 
     // Allocate memory for entire content + null terminator
-    buffer = (char*) calloc(1, fsize + 1);
+    buffer = (char*) allocator->malloc(fsize + 1);
     if (!buffer) {
         fclose(fp);
         volt_fmt_logf(VOLT_FMT_LEVEL_ERROR, "Error reading file: {s}", path);
@@ -70,7 +70,7 @@ static inline const char* _volt_read_file(const char* path) {
     // Read file into buffer
     if (fread(buffer, fsize, 1, fp) != 1) {
         fclose(fp);
-        free(buffer);
+        allocator->free(buffer);
         volt_fmt_logf(VOLT_FMT_LEVEL_ERROR, "Error reading file: {s}", path);
         return NULL;
     }
@@ -80,29 +80,35 @@ static inline const char* _volt_read_file(const char* path) {
     return (const char*) buffer;
 }
 
-int32_t volt_cmd_args_init(volt_cmd_args_t* args, uint32_t argc, char** argv) {
-    args->argc = argc;
-    args->argv = argv;
-    args->parsed_args =
-        (const char***) _volt_fmt_cmd_args(argc, argv, &args->input_count, &args->output_count);
+volt_status_code_t volt_cmd_args_init(volt_cmd_args_t* args, volt_allocator_t* allocator) {
+    args->allocator   = allocator;
+    args->parsed_args = (const char***) _volt_fmt_cmd_args(
+        args->argc, args->argv, &args->input_count, &args->output_count, allocator);
     args->input_files  = args->parsed_args[0];  // this is technically unsafe but idgaf
     args->output_files = args->parsed_args[1];
     return VOLT_SUCCESS;
 }
 
-int32_t volt_cmd_args_deinit(volt_cmd_args_t* args) {
-    free(args->input_files);
-    free(args->output_files);
-    free(args->parsed_args);
+volt_status_code_t volt_cmd_args_deinit(volt_cmd_args_t* args) {
+    args->allocator->free(args->input_files);
+    args->allocator->free(args->output_files);
+    args->allocator->free(args->parsed_args);
 
     return VOLT_SUCCESS;
 }
 
-int32_t volt_init(volt_compiler_t* compiler) {
+volt_status_code_t volt_init(volt_compiler_t* compiler) {
+    if (!compiler->allocator) {
+        compiler->allocator = &volt_default_allocator;
+    }
+
+    volt_cmd_args_init(&compiler->args, compiler->allocator);
+    volt_error_handler_init(&compiler->error_handler, compiler->allocator);
+
     volt_fmt_logf(VOLT_FMT_LEVEL_INFO, "Initializing voltc...");
     volt_cmd_args_t* args = &compiler->args;
 
-    compiler->lexers = malloc(sizeof(volt_lexer_t) * args->input_count);
+    compiler->lexers = compiler->allocator->malloc(sizeof(volt_lexer_t) * args->input_count);
     memset(compiler->lexers, 0, sizeof(volt_lexer_t) * args->input_count);
 
     if (!compiler->lexers)
@@ -114,34 +120,43 @@ int32_t volt_init(volt_compiler_t* compiler) {
     for (size_t i = 0; i < args->input_count; i++) {
         const char* input_file = args->input_files[i];
 
-        volt_lexer_t* lexer = &compiler->lexers[i];
-        lexer->input_stream = _volt_read_file(input_file);
+        volt_lexer_t* lexer      = &compiler->lexers[i];
+        lexer->input_stream      = _volt_read_file(input_file, compiler->allocator);
+        lexer->error_handler     = &compiler->error_handler;
+        lexer->input_stream_name = input_file;
 
         if (!lexer->input_stream) {
             volt_fmt_logf(VOLT_FMT_LEVEL_ERROR, "Failed to read: {s}", input_file);
             return VOLT_FAILURE;
         }
 
-        volt_lexer_init(lexer);
-        volt_fmt_logf(VOLT_FMT_LEVEL_INFO, "File contents: {s}", lexer->input_stream);
+        volt_lexer_init(lexer, compiler->allocator);
+        volt_lexer_lex(lexer);
+        
     }
+
     return VOLT_SUCCESS;
 }
 
-int32_t volt_deinit(volt_compiler_t* compiler) {
-    // Deinit lexers first (they may own buffers)
+volt_status_code_t volt_deinit(volt_compiler_t* compiler) {
+    volt_error_handler_print(&compiler->error_handler);
+
+    // Deinit lexers first (they own buffers)
     for (size_t i = 0; i < compiler->args.input_count; i++) {
         volt_lexer_t* lexer = &compiler->lexers[i];
         volt_lexer_deinit(lexer);
     }
-    free(compiler->lexers);
+
+    compiler->allocator->free(compiler->lexers);
     compiler->lexers = NULL;
 
     volt_cmd_args_deinit(&compiler->args);
+    volt_error_handler_deinit(&compiler->error_handler);
+
     return VOLT_SUCCESS;
 }
 
-int32_t volt_lex(volt_compiler_t* compiler) {
+volt_status_code_t volt_lex(volt_compiler_t* compiler) {
     (void) compiler;
 
     for (size_t i = 0; i < compiler->args.input_count; i++) {
@@ -150,27 +165,27 @@ int32_t volt_lex(volt_compiler_t* compiler) {
     return VOLT_SUCCESS;
 }
 
-int32_t volt_parse(volt_compiler_t* compiler) {
+volt_status_code_t volt_parse(volt_compiler_t* compiler) {
     (void) compiler;
     return 1;
 }
 
-int32_t volt_build_ast(volt_compiler_t* compiler) {
+volt_status_code_t volt_build_ast(volt_compiler_t* compiler) {
     (void) compiler;
     return 1;
 }
 
-int32_t volt_analyze(volt_compiler_t* compiler) {
+volt_status_code_t volt_analyze(volt_compiler_t* compiler) {
     (void) compiler;
     return 1;
 }
 
-int32_t volt_compile(volt_compiler_t* compiler) {
+volt_status_code_t volt_compile(volt_compiler_t* compiler) {
     (void) compiler;
     return 1;
 }
 
-int32_t volt_link(volt_compiler_t* compiler) {
+volt_status_code_t volt_link(volt_compiler_t* compiler) {
     (void) compiler;
     return 1;
 }

@@ -217,14 +217,16 @@ static inline void _volt_fmt_log_v(volt_fmt_level_t lv, const char* fmt, va_list
     fputc('\n', stderr);
 }
 
-void volt_fmt_disable_level(volt_fmt_level_t lv) {
+volt_status_code_t volt_fmt_disable_level(volt_fmt_level_t lv) {
     volt_fmt_level_t* enabled = _volt_fmt_get_enabled();
     *enabled &= ~lv;
+    return VOLT_SUCCESS;
 }
 
-void volt_fmt_logf(volt_fmt_level_t lv, const char* fmt, ...) {
+volt_status_code_t volt_fmt_logf(volt_fmt_level_t lv, const char* fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     _volt_fmt_log_v(lv, fmt, ap);
     va_end(ap);
+    return VOLT_SUCCESS;
 }

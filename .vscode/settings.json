@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "types.h": "c",
+        "error.h": "c",
+        "allocator.h": "c",
+        "xlocale": "c",
+        "__locale": "c"
+    }
+}

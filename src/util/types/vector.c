@@ -14,7 +14,7 @@ volt_vector_t volt_vector_default(void) {
     return vector;
 }
 
-int32_t volt_vector_init(volt_vector_t* v) {
+volt_status_code_t volt_vector_init(volt_vector_t* v) {
     if (!v || !v->allocator)
         return VOLT_FAILURE;
     if (v->capacity == 0)
@@ -23,7 +23,7 @@ int32_t volt_vector_init(volt_vector_t* v) {
     return v->data ? VOLT_SUCCESS : VOLT_FAILURE;
 }
 
-int32_t volt_vector_ensure(volt_vector_t* v, size_t extra) {
+volt_status_code_t volt_vector_ensure(volt_vector_t* v, size_t extra) {
     if (!v || !v->allocator)
         return VOLT_FAILURE;
 
@@ -52,7 +52,7 @@ int32_t volt_vector_ensure(volt_vector_t* v, size_t extra) {
     return VOLT_SUCCESS;
 }
 
-int32_t volt_vector_insert(volt_vector_t* v, size_t index, void* item) {
+volt_status_code_t volt_vector_insert(volt_vector_t* v, size_t index, void* item) {
     if (!v || index > v->size || volt_vector_ensure(v, v->size - index + 1) != VOLT_SUCCESS)
         return VOLT_FAILURE;
 
@@ -64,11 +64,11 @@ int32_t volt_vector_insert(volt_vector_t* v, size_t index, void* item) {
     return VOLT_SUCCESS;
 }
 
-int32_t volt_vector_push_back(volt_vector_t* v, void* item) {
+volt_status_code_t volt_vector_push_back(volt_vector_t* v, void* item) {
     return volt_vector_insert(v, v->size, item);
 }
 
-int32_t volt_vector_remove(volt_vector_t* v, size_t index) {
+volt_status_code_t volt_vector_remove(volt_vector_t* v, size_t index) {
     if (!v || index >= v->size)
         return VOLT_FAILURE;
 
@@ -87,7 +87,7 @@ int32_t volt_vector_remove(volt_vector_t* v, size_t index) {
     return VOLT_SUCCESS;
 }
 
-int32_t volt_vector_pop_back(volt_vector_t* v) {
+volt_status_code_t volt_vector_pop_back(volt_vector_t* v) {
     if (!v || v->size == 0)
         return VOLT_FAILURE;
     return volt_vector_remove(v, v->size - 1);
@@ -105,7 +105,7 @@ void* volt_vector_get_back(volt_vector_t* v) {
     return v->data[v->size - 1];
 }
 
-int32_t volt_vector_deinit(volt_vector_t* v) {
+volt_status_code_t volt_vector_deinit(volt_vector_t* v) {
     if (!v || !v->allocator)
         return VOLT_FAILURE;
     if (v->item_allocator) {

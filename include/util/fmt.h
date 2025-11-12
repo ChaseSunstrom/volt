@@ -16,8 +16,8 @@ enum volt_fmt_level_t {
     VOLT_FMT_LEVEL_ERROR = 1 << 4
 };
 
-void volt_fmt_logf(volt_fmt_level_t, const char*, ...);
-void volt_fmt_disable_level(volt_fmt_level_t);
+volt_status_code_t volt_fmt_logf(volt_fmt_level_t, const char*, ...);
+volt_status_code_t volt_fmt_disable_level(volt_fmt_level_t);
 
 #ifdef __cplusplus
 }

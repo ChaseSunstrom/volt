@@ -14,38 +14,175 @@ use { test.hpp, test2.hpp } as cpp;
  *    u8, u16, u32, u64, u128
  *        f16, f32, f64, f128
  *    bool
- *    isize, usize
+ *    isize, usize,
+ *    type, // generic anytype
  *    cstr <-- null terminated, str 
  *
  *    T[..] // Slice
  *    T[]   // Array
- *    T*    // pointer
- *    T&    // Reference
+ *    T*    // Reference (cant be null)
+ *    T*?   // Pointer (can be null, hence the optional)
  *    T?    // Optional
  *    (T, ...) // tuple
  *
- *    typeinfo: // basically a struct of:
- *        name: cstr
- *        module: cstr
- *        namespace: cstr
- *        function: bool
- *        struct: bool
- *        enum: bool
- *        generics: type[]?
- *        attached_fn: typeinfo? <-- parent
- *        parent: typeinfo? <-- parent struct
- *        comptime: bool
- *        async: bool
+    // comptime-only typeinfo schema
+    comptime struct typeinfo {
+        // stable identifier (hash or interned)
+        id: u128;
+
+        // canonical names and source locations
+        canonical_name: cstr;   // e.g. "module::Type<T>"
+        short_name: cstr;       // e.g. "Type"
+        module_path: cstr;      // e.g. "module::submodule"
+        var_name: cstr?;        // name of a variable when used as introspection of a var (optional)
+        source_file: cstr?;     // optional source file path
+        source_line: i32?;      // optional line number in source
+
+        // kind 
+        kind: type_kind;
+
+        // layout / ABI info (useful even at comptime)
+        size: usize?;           // sizeof(type) in bytes, null if unsized
+        align: usize?;          // alignment in bytes
+        stride: usize?;         // stride when used in arrays
+        is_pod: bool;           // plain-old-data (no drop / trivial copy)
+        is_reference: bool;     // true for 'T*' style non-nullable reference
+        pointer_depth: u8;      // 0 = not pointer, >0 pointer indirection count
+
+        // optional: array/slice/tuple specifics
+        array_len: isize?;      // >=0 for fixed arrays, -1 for dynamic (slices), null if N/A
+        elem_type: typeinfo?;   // element type for arrays/slices/tuples (for tuples this is null)
+        tuple_elems: typeinfo[]?; // for tuple types: element types in order
+
+        // runtime hooks exposed for completeness (callable only if generated)
+        drop_fn_name: cstr?;    // symbol name or debug hint; null if trivial
+        copy_fn_name: cstr?;    // symbol name for copy/clone; null if memcpy
+        equal_fn_name: cstr?;   // symbol name for equality; null if memcmp or not provided
+        hash_fn_name: cstr?;    // optional hash function symbol name
+
+        // fields / members (for struct-like types)
+        struct_fields: field_info[]?; // null if not a struct-like kind
+
+        // enum specifics (for enum-like types)
+        enum_variants: variant_info[]?; // null if not an enum
+
+        // function / closure specifics
+        is_function: bool;
+        is_closure: bool;
+        function_args: typeinfo[]?; // arg types in order
+        function_return: typeinfo?; // return type (null for void)
+        function_varargs: bool;     // true if varargs
+        calling_convention: cstr?;  // e.g. "C", "internal", etc.
+
+        // generics and constraints (comptime only)
+        generics: generic_param[]?; // names, defaults, constraints
+        generic_args: typeinfo[]?;  // concrete generic args if this is an instantiated generic
+
+        // attached/associated functions and methods (comptime metadata)
+        attached_functions: method_info[]?;
+        inherent_methods: method_info[]?; // methods declared on the type
+
+        // reflection and doc metadata
+        attributes: cstr[]?;     // attribute strings like ["inline", "o3"]
+        doc: cstr?;              // documentation comment
+        visibility: visibility?; // PUBLIC/INTERNAL
+
+        // relationships for analysis tools
+        parent_type: typeinfo?;  // if an attached_fn or nested type, reference to owner
+        implements_traits: cstr[]?; // trait names (strings) for quick listing
+
+        // flags & helpers
+        is_comptime_only: bool; // true (this whole struct is comptime-only)
+        is_async: bool;
+        is_optional: bool;      // true if T? optional wrapper
+        is_array: bool;
+        is_slice: bool;
+        is_tuple: bool;
+
+        // free-form extension: key/value metadata for future use
+        metadata: (cstr, cstr)[]?; // pairs of string keys and values
+    }
+
+    // helper sub-structures
+    comptime struct field_info { // comptime on a struct means it can only be created/used at comptime
+        name: cstr;
+        type: typeinfo;          // full nested typeinfo (comptime only)
+        offset: usize?;          // offset in bytes if known/applicable
+        size: usize?;            // sizeof field if known
+        align: usize?;           // alignment of field
+        default_expr: cstr?;     // textual default expression (comptime string)
+        visibility: visibility?;
+        attributes: cstr[]?;
+    }
+
+    comptime struct variant_info {
+        name: cstr;
+        discriminant: i64?;      // explicit discriminant if present
+        payload: typeinfo[]?;    // payload types (empty or null for unit variants)
+        layout: layout_hint?;    // optional hint about layout/padding for this variant
+        attributes: cstr[]?;
+    }
+
+    comptime struct generic_param {
+        name: cstr;
+        param_kind: generic_param_kind;
+        default: cstr?;          // textual default if any
+        constraints: cstr[]?;    // textual constraints (e.g. "T: trait1 + trait2")
+    }
+
+    comptime struct method_info {
+        name: cstr;
+        signature: typeinfo;     // a typeinfo describing the function/closure signature
+        is_static: bool;
+        is_attached: bool;       // true if attached to this type
+        attributes: cstr[]?;
+        visibility: visibility?;
+    }
+
+    comptime struct layout_hint {
+        // optional advisory layout info used for diagnostics
+        size: usize?;
+        align: usize?;
+        field_offsets: (cstr, usize)[]?; // pairs of field name and offset
+    }
+
+    enum type_kind {
+        PRIMITIVE,
+        POINTER,
+        REFERENCE,
+        ARRAY,
+        SLICE,
+        TUPLE,
+        STRUCT,
+        ENUM,
+        FUNCTION,
+        CLOSURE,
+        TRAIT_OBJECT,
+        UNKNOWN
+    }
+
+    enum visibility {
+        PUBLIC,
+        INTERNAL // internal to this project
+    }
+
+    enum generic_param_kind {
+        TYPE,
+        CONST
+    }
+
+ *        
  *
  *
  * Keywords:
  *    Above types +
- *    const, var, let, static,
+ *    var, val, static, (val is immutable),
+ *    intern, // internal to only this project if used (cant be used on struct/enum/error members)
  *    attach, struct, enum, fn, error
- *    comptime, constraint, async, true, false,
+ *    comptime, trait, async, true, false,
  *    extern, export,
  *    namespace, use, this, move, copy
- *    if, else, for, while, loop, try, catch, null
+ *    if, else, for, while, loop, try, catch, null, match
  *    suspend, resume
  */
 
@@ -57,13 +194,13 @@ fn main() -> i32 {
    
     var x = 0; // implicit i32
 
-    let closure = |&x| () {
+    val closure = |x*| () { // takes x by reference
          x++; 
     };
 
-    let array: i32[] = 0..100; // exclusive range
+    val array: i32[] = 0..100; // exclusive range
     
-    for (value, i) in array | value * 2 | { 
+    for (value, i) in array | value * 2 | { // || gets ran at the start of each iteration
        
        closure();
 
@@ -75,9 +212,23 @@ fn main() -> i32 {
        * std::io::println("I: {}", i);
        */
     }
+
+    val some_loop_assign = 
+        for (value, i) in array | value * 2 | [ var result: i32 ]  // assigns some_loop_assign to result at the last iteration 
+    {
+       
+       closure();
+
+      /* formatted:
+       * std::io::println("Value: {}", value);
+       * std::io::println("I: {}", i);
+       */
+
+       result += x;
+    }
     
-    for (i) in 0..100 :outer {
-        for (j) in 0..=99 :inner {
+    :outer for (i) in 0..100 {
+        :inner for (j) in 0..=99  {
               if (i == 50) {
                   break: outer;
               }
@@ -117,22 +268,86 @@ attach fn new(static this: example, member: i32, member2: f64) -> example {
 }
 
 attach fn delete(this: example) -> void {
-  this.member3.delete();
+  this.member3.delete(); // Explicitly call delete here, if delete was called on 'this', it will delete all members automatically
+}
+
+fn overload_test(x: i32) -> i32 {
+    return x;
+}
+
+fn overload_test(x: i32, y: i32) -> i32 {
+    return x + y;
+}
+
+async fn test_async() -> i32 {
+    var sum: i32 = 0;
+    var i: i32 = 0;
+    while (i < 10) {
+        sum = sum + i;
+        i++;
+    }
+    return sum;  // Returns 45
+}
+
+async fn async_factorial(n: i32) -> i32 {
+    if (n <= 1) {
+        return 1;
+    }
+    var result: i32 = 1;
+    var i: i32 = 2;
+    while (i <= n) {
+        result = result * i;
+        i++;
+    }
+    return result;
+}
+
+async fn test_suspend_resume() -> i32 {
+    var result: i32 = 0;
+
+    // First computation phase
+    result = 10;
+    suspend;  // Yield control, preserve state
+
+    // Resume here - state preserved
+    result = result + 5;  // result is still 10
+    suspend;
+
+    // Resume again
+    result = result * 2;  // result is now 30
+    return result;
 }
 
 // Gets ran when a generic uses it and requires all constraints to be true, or an error will occur (compile time)
-constraint alllocator_constraint {
-/* Just a label ->*/ malloc:  has fn<T: type>(isize) -> T*;
-/* Just a label ->*/ realloc: has fn<T: type>(T*, isize?) -> T*;
-/* Just a label ->*/ free:    has fn<T: type>(T*) -> void;
+trait t_allocator  { // naming convention for traits is t_
+    fn<T: type> malloc(this, isize) -> T*;
+    fn<T: type> realloc(this, T*, isize?) -> T*;
+    fn<T: type> free(this, T*) -> void;
 }
 
-// CONSTRAINTS
-// <T: type>
-// constraint some_constraint {
-//    of_type: is T*
-//    has_fn:  has fn(i32) -> void;
-// }
+namespace std::mem {
+    struct default_allocator; // Empty struct, basically a type namespace
+    <T: type> // generic arg for the constraint
+    attach t_allocator -> default_allocator {
+        // Because this is in an attached constraint, we dont need to specify the attach fn, it will do it here
+        // Note: because we are in an attached constraint block, we dont need to explicitly set the type of this, as it is known, if we wanted to be explicit though, we could.
+        fn malloc(this, size: usize?) -> !T* {
+            if (size == null) {
+                return @cast<T*>(0); // NOTE: @cast is very dangerous as it can cast from any type to another, use "as T" for a safe cast that allows safe conversions
+            } else {
+                return @cast<T*>(size);
+            }
+        }
+    
+        fn realloc(this, ptr: T*, size: usize) -> !T* {
+            return @cast<T*>(size);
+        }
+    
+        fn free(this, ptr: T*) {
+            // empty for now
+        }
+    }
+}
 
 // NOTE THESE METHODS WILL BE ATTACHED IN THE STANDARD LIBRARY LIKE THIS:
 //
@@ -161,11 +376,16 @@ constraint alllocator_constraint {
 
 // Generics can also be inside of structs and enums:
 
-<T: type, C: i32>
+<T: type, C: i32 = 0> // C will default to 0 if theres nothing passed into it
 struct some_struct {
-  member1: T;
-  member2: T*;
-  member3: T&;
+  member1: i32 = C; // Default values, allows non initialization of them during construction
+  member2: T*?; // implicitly defaults to null
+  member3: T*;
+}
+
+fn some_fn() -> void {
+    var some_struct: some_struct<i32> = { member2: null, member3: &member1 };
+    // var some_struct: some_struct<i32>; // default some_struct, will error because member3 cant be defaulted (its a reference)
 }
 
 // attaching methods is similar to above, however they must be passed into this
@@ -215,8 +435,89 @@ fn some_generic_error() some_error2<cstr>!void {
       }
 }
 
+fn pointer_array() -> i32 {
+    var arr: i32[] = { 5, 10, 15, 20 }; // Array initialization
+    var p0: i32* = &(arr[0]);
+    var p1: i32* = &(arr[1]);
+    var p2: i32* = &(arr[2]);
+
+    return *p0 + *p1 + *p2;  // 5 + 10 + 15 = 30
+}
+
 <T: type>
 attach fn new(static this: generic_enum<T>) -> void {} // Redundant new
+
+
+<T: type>
+attach fn new(static this: T) -> T {} // Attaches this function to every type, T::new()
+
+
+<T: type>
+attach fn new(static this: T) -> T* {} // Attaches this function to every type, T::new(), overload on return type, requires a context or its ambigious
+
+
+<T: type, U: type>
+attach fn new(static this: T) -> void {} // Overloaded generic function
+
+comptime fn comp() -> type {
+    return i32; // type literal can be returned, which allows us to use it in a generic definition:
+    /*
+        <T: comp()>
+        fn some_generic_fn() -> T {}
+    */
+}
+
+comptime fn comp() -> i32 { // everything in here runs at comptime
+    var result = 0; // implicit i32
+    for (i) in 0..100 {
+        result += i;
+    } 
+    return result;
+}
+
+<C: i32>
+fn comp() -> i32 {
+    // runs at comptime
+    comptime var determined_type: type;
+    comptime if (C > 0) {
+        determined_type = i32;
+    } else {
+        determined_type = i8;
+    } // this forces all cases to be covered, otherwise error
+    // a better option would be to match:
+    comptime match C {
+        C > 0 => determined_type = i32;
+        default => { determined_type = i8; }; // match also allows block syntax
+    }
+
+    var result: determined_type = 0;
+    for (i) in 0..100 {
+        result += i;
+    } 
+    return result;
+}
+
+fn optional(some_op: i32?) -> void {
+    if (some_op) { // same as calling some_op.value or !some_op.none
+        some_op += 1; // no need to do some_op.value (as we know it has one from the above if)
+    } else {
+
+    }
+}
+
+intern fn some_internal() -> void { } // internal to only this project, (default is public)
+
+@attributes(["inline", "o3", "section:.text"]) // attributes
+fn sum_range(n: i32) -> i32 {
+    var sum: i32 = 0;
+    var i: i32 = 0;
+    while (i < n) {
+        sum = sum + i;
+        i++;
+    }
+    return sum;
+}
+
 
 // Enum values are accessed like:
 // var value = generic_enum::NO_VALUE;
@@ -224,6 +525,10 @@ attach fn new(static this: generic_enum<T>) -> void {} // Redundant new
 // var generic = generic_enum<f32>::VALUE(1.23);
 
 // Builtins:
-@typeof(type) -> typeinfo
+@typeinfo(type) -> typeinfo
+@typeof(type) -> type
 @cast<new_type>(variable)
 @sizeof(type) -> isize
+
+````
+`

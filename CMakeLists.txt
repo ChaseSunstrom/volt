@@ -9,6 +9,7 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+
 include(FetchContent)
 
 set(DEPS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vendor")
@@ -97,6 +98,11 @@ target_compile_definitions(${PROJECT_NAME}
 if(MSVC AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_options(${PROJECT_NAME} PRIVATE /fsanitize=address /RTC1 /sdl)
   target_link_options(${PROJECT_NAME} PRIVATE /fsanitize=address)
+endif()
+
+if (MSVC)
+  set_property(TARGET ${PROJECT_NAME} PROPERTY COMPILE_WARNING_AS_ERROR OFF)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE "_CRT_SECURE_NO_WARNINGS=1")
 endif()
 
 # GNU/Clang hardening (Linux/glibc, adjust per platform)
