@@ -21,7 +21,6 @@ int32_t main(int32_t argc, char** argv) {
     volt_init(&compiler);
     volt_lex(&compiler);
     volt_parse(&compiler);
-    volt_build_ast(&compiler);
     volt_analyze(&compiler);
     volt_compile(&compiler);
     volt_link(&compiler);

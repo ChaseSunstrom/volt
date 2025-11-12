@@ -111,29 +111,17 @@ volt_status_code_t volt_init(volt_compiler_t* compiler) {
     compiler->lexers = compiler->allocator->malloc(sizeof(volt_lexer_t) * args->input_count);
     memset(compiler->lexers, 0, sizeof(volt_lexer_t) * args->input_count);
 
+    compiler->parsers = compiler->allocator->malloc(sizeof(volt_parser_t) * args->input_count);
+    memset(compiler->parsers, 0, sizeof(volt_parser_t) * args->input_count);
+
     if (!compiler->lexers)
+        return VOLT_FAILURE;
+
+    if (!compiler->parsers)
         return VOLT_FAILURE;
 
     volt_fmt_logf(VOLT_FMT_LEVEL_INFO, "Input size: {i32}, Output size: {i32}",
                   (int32_t) args->input_count, (int32_t) args->output_count);
-
-    for (size_t i = 0; i < args->input_count; i++) {
-        const char* input_file = args->input_files[i];
-
-        volt_lexer_t* lexer      = &compiler->lexers[i];
-        lexer->input_stream      = _volt_read_file(input_file, compiler->allocator);
-        lexer->error_handler     = &compiler->error_handler;
-        lexer->input_stream_name = input_file;
-
-        if (!lexer->input_stream) {
-            volt_fmt_logf(VOLT_FMT_LEVEL_ERROR, "Failed to read: {s}", input_file);
-            return VOLT_FAILURE;
-        }
-
-        volt_lexer_init(lexer, compiler->allocator);
-        volt_lexer_lex(lexer);
-        
-    }
 
     return VOLT_SUCCESS;
 }
@@ -141,10 +129,18 @@ volt_status_code_t volt_init(volt_compiler_t* compiler) {
 volt_status_code_t volt_deinit(volt_compiler_t* compiler) {
     volt_error_handler_print(&compiler->error_handler);
 
+    // Deinit semantic analyzer
+    volt_semantic_analyzer_deinit(&compiler->analyzer);
+
     // Deinit lexers first (they own buffers)
     for (size_t i = 0; i < compiler->args.input_count; i++) {
         volt_lexer_t* lexer = &compiler->lexers[i];
         volt_lexer_deinit(lexer);
+    }
+
+    for (size_t i = 0; i < compiler->args.input_count; i++) {
+        volt_parser_t* parser = &compiler->parsers[i];
+        volt_parser_deinit(parser);
     }
 
     compiler->allocator->free(compiler->lexers);
@@ -157,27 +153,65 @@ volt_status_code_t volt_deinit(volt_compiler_t* compiler) {
 }
 
 volt_status_code_t volt_lex(volt_compiler_t* compiler) {
-    (void) compiler;
-
     for (size_t i = 0; i < compiler->args.input_count; i++) {
+        const char* input_file = compiler->args.input_files[i];
+
+        volt_lexer_t*  lexer  = &compiler->lexers[i];
+        volt_parser_t* parser = &compiler->parsers[i];
+
+        lexer->input_stream      = _volt_read_file(input_file, compiler->allocator);
+        lexer->error_handler     = &compiler->error_handler;
+        lexer->input_stream_name = input_file;
+
+        if (!lexer->input_stream) {
+            volt_fmt_logf(VOLT_FMT_LEVEL_ERROR, "Failed to read: {s}", input_file);
+            return VOLT_FAILURE;
+        }
+
+        volt_lexer_init(lexer, compiler->allocator);
+        volt_lexer_lex(lexer);
+
+        volt_parser_init(parser, compiler->allocator, &lexer->tokens, &compiler->error_handler,
+                         lexer->input_stream_name);
     }
 
     return VOLT_SUCCESS;
 }
 
 volt_status_code_t volt_parse(volt_compiler_t* compiler) {
-    (void) compiler;
-    return 1;
-}
-
-volt_status_code_t volt_build_ast(volt_compiler_t* compiler) {
-    (void) compiler;
-    return 1;
+    for (size_t i = 0; i < compiler->args.input_count; i++) {
+        volt_parser_t* parser = &compiler->parsers[i];
+        volt_parser_parse(parser);
+    }
+    return VOLT_SUCCESS;
 }
 
 volt_status_code_t volt_analyze(volt_compiler_t* compiler) {
-    (void) compiler;
-    return 1;
+    // Collect all AST roots and filenames
+    volt_ast_node_t** asts =
+        (volt_ast_node_t**) compiler->allocator->malloc(sizeof(volt_ast_node_t*) *
+                                                        compiler->args.input_count);
+    const char** filenames =
+        (const char**) compiler->allocator->malloc(sizeof(const char*) *
+                                                   compiler->args.input_count);
+
+    for (size_t i = 0; i < compiler->args.input_count; i++) {
+        asts[i]       = compiler->parsers[i].root;
+        filenames[i]  = compiler->args.input_files[i];
+    }
+
+    // Initialize semantic analyzer with all ASTs
+    volt_semantic_analyzer_init(&compiler->analyzer, compiler->allocator, asts, filenames,
+                                compiler->args.input_count, &compiler->error_handler);
+
+    // Run semantic analysis
+    volt_status_code_t result = volt_semantic_analyzer_analyze(&compiler->analyzer);
+
+    // Cleanup temporary arrays
+    compiler->allocator->free(asts);
+    compiler->allocator->free(filenames);
+
+    return result;
 }
 
 volt_status_code_t volt_compile(volt_compiler_t* compiler) {

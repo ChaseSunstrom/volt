@@ -20,7 +20,8 @@ struct volt_token_t {
 
 void               volt_vtoken_deinit(void*);
 volt_status_code_t volt_token_deinit(volt_token_t*);
-void              volt_token_print(volt_token_t* token);
+void               volt_token_print(volt_token_t*);
+const char*        volt_token_type_to_string(volt_token_type_t);
 
 extern volt_allocator_t volt_token_allocator;
 

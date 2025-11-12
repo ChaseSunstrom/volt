@@ -1,8 +1,8 @@
 use std::io;
 
 // import C headers into a C namespace
-use { test.h, test2.h } as c;
-use { test.hpp, test2.hpp } as cpp;
+use { "test.h", "test2.h" } as c;
+// use { test.hpp, test2.hpp } as cpp;
 
 // c::some_fn();
 // cpp::some_temlpate<i32>(1);
@@ -187,8 +187,8 @@ use { test.hpp, test2.hpp } as cpp;
  */
 
 <Args: type[]>
-extern C // Compiler interprets this
-fn printf(cstr, Args);
+extern "C" fn printf(cstr, Args) -> i32;
+
 
 fn main() -> i32 {
    
@@ -213,6 +213,15 @@ fn main() -> i32 {
        */
     }
 
+    // we can also do this with errors
+    var some_error: error!i32 = 0;
+    if (some_error.err) {
+        return 1;
+    }
+
+    // defer can also be used like in zig:
+    // defer some_variable.delete();
+
     val some_loop_assign = 
         for (value, i) in array | value * 2 | [ var result: i32 ]  // assigns some_loop_assign to result at the last iteration 
     {
@@ -225,7 +234,7 @@ fn main() -> i32 {
        */
 
        result += x;
-    }
+    };
     
     :outer for (i) in 0..100 {
         :inner for (j) in 0..=99  {
@@ -235,16 +244,16 @@ fn main() -> i32 {
         }
     }
 
-    while (/* some_condition */) {}
+    while (true) {}
 
     loop { /* forever until break */ }
 
     var some_value = some_failing_func() catch |e| {
-          e
-      }; // assigns some_value to e if it fails
+          return e;
+    }; // assigns some_value to e if it fails
 
-    // var some_value = try some_failing_func(); // would propagate error
-    // var some_value = some_failing_func(); // some_value would become error!value
+    var some_value = try some_failing_func(); // would propagate error
+    var some_value = some_failing_func(); // some_value would become error!value
   
     return 0;
 }
@@ -320,9 +329,17 @@ async fn test_suspend_resume() -> i32 {
 
 // Gets ran when a generic uses it and requires all constraints to be true, or an error will occur (compile time)
 trait t_allocator  { // naming convention for traits is t_
-    fn<T: type> malloc(this, isize) -> T*;
-    fn<T: type> realloc(this, T*, isize?) -> T*;
-    fn<T: type> free(this, T*) -> void;
+    <T: type> fn malloc(this, isize) -> T*;
+    <T: type> fn realloc(this, T*, isize?) -> T*;
+    <T: type> fn free(this, T*) -> void;
+} 
+
+// If we want to use the same type for this:
+<T: type>
+trait t_allocator2 {
+    fn malloc(this, isize) -> T*;
+    fn realloc(this, T*, isize?) -> T*;
+    fn free(this, T*) -> void;
 }
 
 namespace std::mem {
@@ -343,7 +360,7 @@ namespace std::mem {
             return @cast<T*>(size);
         }
     
-        fn free(this, ptr: T*) {
+        fn free(this, ptr: T*) -> void {
             // empty for now
         }
     }
@@ -352,21 +369,19 @@ namespace std::mem {
 // NOTE THESE METHODS WILL BE ATTACHED IN THE STANDARD LIBRARY LIKE THIS:
 //
 //
-// <T: type, Allocator: allocator_constraint = std::default_allocator>
-// attach fn new(static this: T, value: T?, allocator: Allocator?) -> T* {
-//    var t: T* = allocator::malloc<T>();
-//    *t = value;
-//    // could also deref like this (like zig) when chaining:
-//    // t.* = value;
-//    return t;
-// } // because this is a template function, it will be auto attached to any type that calls it, such as:
-//
-// // And corresponding free:
-// <T: type, Allocator: allocator_constraint = std::default_allocator>
-// attach fn delete(this: T, allocator: Allocator?) -> void {
-//    allocator::free<T>(this);
-// }
-//
+<T: type, Allocator: allocator_constraint = std::mem::default_allocator>
+attach fn new(static this: T, value: T?, allocator: Allocator?) -> T* {
+    var t: T* = allocator.malloc<T>();
+    *t = value;
+    return t;
+} // because this is a template function, it will be auto attached to any type that calls it, such as:
+
+// And corresponding free:
+<T: type, Allocator: allocator_constraint = std::default_allocator>
+attach fn delete(this: T, allocator: Allocator?) -> void {
+    allocator.free<T>(this);
+}
+
 // u8::new() or new<u8>()
 // With a custom allocator:
 // u8::new<my::allocator>() or new<u8, my::allocator>()
@@ -403,6 +418,8 @@ enum some_reg_enum {
 enum generic_enum {
     VALUE: T,
     SOME_OTHER: i32,
+    TUPLE_VALUE: (i32, i32),
+    NAMED_TUPLE_VALUE: (x: i32, y: i32),
     NO_VALUE
 }
 
@@ -419,7 +436,7 @@ error some_error2 {
 }
 
 // Error function:
-fn some_error_thrower() some_error!void {
+fn some_error_thrower() -> some_error!void {
     if (1) { // This will get evaluated at comptime, as its a constexpr
        return some_error::BLAH;
     } else {
@@ -427,7 +444,7 @@ fn some_error_thrower() some_error!void {
     }
 }
 
-fn some_generic_error() some_error2<cstr>!void {
+fn some_generic_error() -> some_error2<cstr>!void {
     if (1) {
         return some_error2::STRING_MSG("HI");
     } else {
@@ -485,7 +502,7 @@ fn comp() -> i32 {
         determined_type = i8;
     } // this forces all cases to be covered, otherwise error
     // a better option would be to match:
-    comptime match C {
+    comptime match (C) {
         C > 0 => determined_type = i32;
         default => { determined_type = i8; }; // match also allows block syntax
     }
@@ -505,10 +522,10 @@ fn optional(some_op: i32?) -> void {
     }
 }
 
-intern fn some_internal() -> void { } // internal to only this project, (default is public)
+internal fn some_internal() -> void { } // internal to only this project, (default is public)
 
 @attributes(["inline", "o3", "section:.text"]) // attributes
-fn sum_range(n: i32) -> i32 {
+public comptime async fn sum_range(n: i32) -> i32 {
     var sum: i32 = 0;
     var i: i32 = 0;
     while (i < n) {
@@ -525,10 +542,9 @@ fn sum_range(n: i32) -> i32 {
 // var generic = generic_enum<f32>::VALUE(1.23);
 
 // Builtins:
+/*
 @typeinfo(type) -> typeinfo
 @typeof(type) -> type
 @cast<new_type>(variable)
 @sizeof(type) -> isize
-
-````
-`
+*/

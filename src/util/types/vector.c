@@ -15,11 +15,12 @@ volt_vector_t volt_vector_default(void) {
 }
 
 volt_status_code_t volt_vector_init(volt_vector_t* v) {
-    if (!v || !v->allocator)
+    if (!v)
         return VOLT_FAILURE;
     if (v->capacity == 0)
         v->capacity = 1;
-    v->data = v->allocator->malloc(v->capacity * sizeof(void*));
+    v->allocator = v->allocator ? v->allocator : &volt_default_allocator;
+    v->data      = v->allocator->malloc(v->capacity * sizeof(void*));
     return v->data ? VOLT_SUCCESS : VOLT_FAILURE;
 }
 

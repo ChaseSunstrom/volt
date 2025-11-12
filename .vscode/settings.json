@@ -1,9 +1,9 @@
 {
     "files.associations": {
-        "types.h": "c",
-        "error.h": "c",
-        "allocator.h": "c",
-        "xlocale": "c",
-        "__locale": "c"
+        "parser.h": "c",
+        "expression.h": "c",
+        "iosfwd": "c",
+        "xlocbuf": "c",
+        "locale": "c"
     }
 }

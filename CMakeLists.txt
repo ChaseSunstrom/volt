@@ -21,7 +21,8 @@ message(STATUS "Setting up toml++ git dependency.")
 FetchContent_Declare(
   tomlplusplus
   GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
-  SOURCE_DIR ${DEPS_DIR}/tomlplusplus)
+  SOURCE_DIR ${DEPS_DIR}/tomlplusplus
+  UPDATE_DISCONNECTED TRUE)
 
 FetchContent_MakeAvailable(tomlplusplus)
 

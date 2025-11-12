@@ -2,6 +2,8 @@
 #define __VOLT_VOLT_H__
 
 #include <lexer/lexer.h>
+#include <parser/parser.h>
+#include <semantic/analyzer.h>
 #include <volt/error.h>
 
 #ifdef __cplusplus
@@ -22,10 +24,12 @@ struct volt_cmd_args_t {
 
 typedef struct volt_compiler_t volt_compiler_t;
 struct volt_compiler_t {
-    volt_cmd_args_t      args;
-    volt_error_handler_t error_handler;
-    volt_lexer_t*        lexers;
-    volt_allocator_t*    allocator;
+    volt_cmd_args_t           args;
+    volt_error_handler_t      error_handler;
+    volt_lexer_t*             lexers;
+    volt_parser_t*            parsers;
+    volt_semantic_analyzer_t  analyzer;
+    volt_allocator_t*         allocator;
 };
 
 volt_status_code_t volt_cmd_args_init(volt_cmd_args_t*, volt_allocator_t* allocator);
@@ -35,7 +39,6 @@ volt_status_code_t volt_init(volt_compiler_t*);
 volt_status_code_t volt_deinit(volt_compiler_t*);
 volt_status_code_t volt_lex(volt_compiler_t*);
 volt_status_code_t volt_parse(volt_compiler_t*);
-volt_status_code_t volt_build_ast(volt_compiler_t*);
 volt_status_code_t volt_analyze(volt_compiler_t*);
 volt_status_code_t volt_compile(volt_compiler_t*);
 volt_status_code_t volt_link(volt_compiler_t*);

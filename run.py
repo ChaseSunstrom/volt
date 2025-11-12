@@ -23,7 +23,7 @@ def run_compile() -> None:
         result = subprocess.run("clear", shell=True)
 
     result = subprocess.run(
-        f"cd build && cmake {compiler} {generator} .. && cmake --build . && cd ..",
+        f"cmake --fresh -S . -B build {compiler} {generator} && cmake --build build",
         shell=True,
     )
 

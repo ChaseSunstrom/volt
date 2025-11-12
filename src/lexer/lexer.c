@@ -25,7 +25,7 @@ static volt_keyword_map_t keywords[] = {{"i8", VOLT_TOKEN_TYPE_I8_KW},
                                         {"bool", VOLT_TOKEN_TYPE_BOOL_KW},
                                         {"isize", VOLT_TOKEN_TYPE_ISIZE_KW},
                                         {"usize", VOLT_TOKEN_TYPE_USIZE_KW},
-                                        {"type", VOLT_TOKEN_TYPE_TYPE_KW_KW},
+                                        {"type", VOLT_TOKEN_TYPE_TYPE_KW},
                                         {"cstr", VOLT_TOKEN_TYPE_CSTR_KW},
                                         {"str", VOLT_TOKEN_TYPE_STR_KW},
                                         {"var", VOLT_TOKEN_TYPE_VAR_KW},
@@ -40,7 +40,7 @@ static volt_keyword_map_t keywords[] = {{"i8", VOLT_TOKEN_TYPE_I8_KW},
                                         {"return", VOLT_TOKEN_TYPE_RETURN_KW},
                                         {"break", VOLT_TOKEN_TYPE_BREAK_KW},
                                         {"continue", VOLT_TOKEN_TYPE_CONTINUE_KW},
-                                        {"intern", VOLT_TOKEN_TYPE_INTERN_KW},
+                                        {"internal", VOLT_TOKEN_TYPE_INTERNAL_KW},
                                         {"public", VOLT_TOKEN_TYPE_PUBLIC_KW},
                                         {"trait", VOLT_TOKEN_TYPE_TRAIT_KW},
                                         {"async", VOLT_TOKEN_TYPE_ASYNC_KW},
@@ -60,9 +60,12 @@ static volt_keyword_map_t keywords[] = {{"i8", VOLT_TOKEN_TYPE_I8_KW},
                                         {"loop", VOLT_TOKEN_TYPE_LOOP_KW},
                                         {"try", VOLT_TOKEN_TYPE_TRY_KW},
                                         {"catch", VOLT_TOKEN_TYPE_CATCH_KW},
+                                        {"in", VOLT_TOKEN_TYPE_IN_KW},
                                         {"null", VOLT_TOKEN_TYPE_NULL_KW},
                                         {"suspend", VOLT_TOKEN_TYPE_SUSPEND_KW},
                                         {"resume", VOLT_TOKEN_TYPE_RESUME_KW},
+                                        {"defer", VOLT_TOKEN_TYPE_DEFER_KW},
+                                        {"as", VOLT_TOKEN_TYPE_AS_KW},
                                         {NULL, 0}};
 
 volt_status_code_t volt_lexer_init(volt_lexer_t* lexer, volt_allocator_t* allocator) {
@@ -86,10 +89,12 @@ volt_status_code_t volt_lexer_deinit(volt_lexer_t* lexer) {
     }
 
     // Debug token printing
+    /*
     for (size_t i = 0; i < lexer->tokens.size; i++) {
         volt_token_t* token = (volt_token_t*) volt_vector_get(&lexer->tokens, i);
         volt_token_print(token);
     }
+    */
 
     volt_vector_deinit(&lexer->tokens);
     lexer->allocator->free((void*) lexer->input_stream);
@@ -114,8 +119,10 @@ bool is_whitespace(char c) {
 
 bool match_char(volt_lexer_t* lexer, char expected) {
     size_t next = lexer->current_position + 1;
-    if (next >= lexer->input_stream_length) return false;
-    if (lexer->input_stream[next] != expected) return false;
+    if (next >= lexer->input_stream_length)
+        return false;
+    if (lexer->input_stream[next] != expected)
+        return false;
 
     // consume the next char
     lexer->current_position = next;
@@ -123,23 +130,22 @@ bool match_char(volt_lexer_t* lexer, char expected) {
     return true;
 }
 
-volt_token_t* create_token(volt_lexer_t* lexer,
-                           volt_token_type_t type,
-                           const char* lexeme,
-                           size_t start_line,
-                           size_t start_column) {
+volt_token_t* create_token(volt_lexer_t* lexer, volt_token_type_t type, const char* lexeme,
+                           size_t start_line, size_t start_column) {
     volt_token_t* token = (volt_token_t*) lexer->allocator->malloc(sizeof(volt_token_t));
-    if (!token) return NULL;
+    if (!token)
+        return NULL;
 
     token->allocator = lexer->allocator;
     token->type      = type;
-    token->lexeme    = strdup(lexeme); 
+    token->lexeme    = strdup(lexeme);
     token->line      = start_line;
     token->column    = start_column;
     return token;
 }
 
-volt_token_t* token_identifier_or_kw(volt_lexer_t* lexer, const char* lexeme, size_t start_line, size_t start_col) {
+volt_token_t* token_identifier_or_kw(volt_lexer_t* lexer, const char* lexeme, size_t start_line,
+                                     size_t start_col) {
     for (size_t i = 0; keywords[i].keyword != NULL; i++) {
         if (strcmp(lexeme, keywords[i].keyword) == 0) {
             return create_token(lexer, keywords[i].token_type, lexeme, start_line, start_col);
@@ -151,7 +157,7 @@ volt_token_t* token_identifier_or_kw(volt_lexer_t* lexer, const char* lexeme, si
 volt_token_t* token_identifier(volt_lexer_t* lexer) {
     size_t start_line = lexer->current_line;
     size_t start_col  = lexer->current_column;
-    size_t start   = lexer->current_position;
+    size_t start      = lexer->current_position;
 
     while (lexer->current_position < lexer->input_stream_length &&
            is_alnum(lexer->input_stream[lexer->current_position])) {
@@ -159,7 +165,7 @@ volt_token_t* token_identifier(volt_lexer_t* lexer) {
         lexer->current_column++;
     }
 
-    size_t len = lexer->current_position - start;
+    size_t len    = lexer->current_position - start;
     char*  lexeme = (char*) lexer->allocator->malloc(len + 1);
     strncpy(lexeme, &lexer->input_stream[start], len);
     lexeme[len] = '\0';
@@ -172,7 +178,7 @@ volt_token_t* token_identifier(volt_lexer_t* lexer) {
 volt_token_t* token_number(volt_lexer_t* lexer) {
     size_t start_line = lexer->current_line;
     size_t start_col  = lexer->current_column;
-    size_t start   = lexer->current_position;
+    size_t start      = lexer->current_position;
 
     while (lexer->current_position < lexer->input_stream_length &&
            is_digit(lexer->input_stream[lexer->current_position])) {
@@ -180,36 +186,49 @@ volt_token_t* token_number(volt_lexer_t* lexer) {
         lexer->current_column++;
     }
 
+    // Check for decimal point, but NOT if it's followed by another dot (range operator)
     if (lexer->current_position < lexer->input_stream_length &&
         lexer->input_stream[lexer->current_position] == '.') {
-        // consume '.'
-        lexer->current_position++;
-        lexer->current_column++;
-        while (lexer->current_position < lexer->input_stream_length &&
-               is_digit(lexer->input_stream[lexer->current_position])) {
+        // Look ahead to see if it's '..' (range operator)
+        char next_char = (lexer->current_position + 1 < lexer->input_stream_length)
+                             ? lexer->input_stream[lexer->current_position + 1]
+                             : '\0';
+
+        // Only consume '.' if it's NOT followed by another '.' (not a range operator)
+        if (next_char != '.') {
+            // consume '.'
             lexer->current_position++;
             lexer->current_column++;
+            while (lexer->current_position < lexer->input_stream_length &&
+                   is_digit(lexer->input_stream[lexer->current_position])) {
+                lexer->current_position++;
+                lexer->current_column++;
+            }
         }
+        // If next_char is '.', we don't consume anything - let it be tokenized as '..'
     }
 
-    size_t len = lexer->current_position - start;
+    size_t len    = lexer->current_position - start;
     char*  lexeme = (char*) lexer->allocator->malloc(len + 1);
     strncpy(lexeme, &lexer->input_stream[start], len);
     lexeme[len] = '\0';
 
-    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_NUMBER_LITERAL, lexeme, start_line, start_col);
+    volt_token_t* token =
+        create_token(lexer, VOLT_TOKEN_TYPE_NUMBER_LITERAL, lexeme, start_line, start_col);
     lexer->allocator->free(lexeme);
     return token;
 }
 
 volt_token_t* token_string(volt_lexer_t* lexer, char quote_type) {
     size_t start_line = lexer->current_line;
-    size_t start_col  = lexer->current_column - 1; // caller consumes opening quote and advanced column
-    size_t start   = lexer->current_position;   // points at first char of string content
+    size_t start_col =
+        lexer->current_column - 1;           // caller consumes opening quote and advanced column
+    size_t start = lexer->current_position;  // points at first char of string content
 
     while (lexer->current_position < lexer->input_stream_length) {
         char c = lexer->input_stream[lexer->current_position];
-        if (c == quote_type) break;
+        if (c == quote_type)
+            break;
         if (c == '\n') {
             lexer->current_line++;
             lexer->current_column = 1;
@@ -221,8 +240,8 @@ volt_token_t* token_string(volt_lexer_t* lexer, char quote_type) {
         lexer->current_column++;
     }
 
-    size_t len = lexer->current_position - start;
-    char* lexeme = (char*) lexer->allocator->malloc(len + 1);
+    size_t len    = lexer->current_position - start;
+    char*  lexeme = (char*) lexer->allocator->malloc(len + 1);
     strncpy(lexeme, &lexer->input_stream[start], len);
     lexeme[len] = '\0';
 
@@ -233,7 +252,8 @@ volt_token_t* token_string(volt_lexer_t* lexer, char quote_type) {
         lexer->current_column++;
     }
 
-    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_STRING_LITERAL, lexeme, start_line, start_col);
+    volt_token_t* token =
+        create_token(lexer, VOLT_TOKEN_TYPE_STRING_LITERAL, lexeme, start_line, start_col);
     lexer->allocator->free(lexeme);
     return token;
 }
@@ -271,17 +291,20 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
 
             case '+': {
                 if (next_char == '+') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_PLUS_PLUS, "++", start_line, start_col);
+                    volt_token_t* token =
+                        create_token(lexer, VOLT_TOKEN_TYPE_PLUS_PLUS, "++", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
                 } else if (next_char == '=') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_PLUS_EQUAL, "+=", start_line, start_col);
+                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_PLUS_EQUAL,
+                                                       "+=", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
                 } else {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_PLUS, "+", start_line, start_col);
+                    volt_token_t* token =
+                        create_token(lexer, VOLT_TOKEN_TYPE_PLUS, "+", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position++;
                     lexer->current_column++;
@@ -291,22 +314,26 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
 
             case '-': {
                 if (next_char == '-') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_TACK_TACK, "--", start_line, start_col);
+                    volt_token_t* token =
+                        create_token(lexer, VOLT_TOKEN_TYPE_TACK_TACK, "--", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
                 } else if (next_char == '=') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_TACK_EQUAL, "-=", start_line, start_col);
+                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_TACK_EQUAL,
+                                                       "-=", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
                 } else if (next_char == '>') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_TACK_RANGLE, "->", start_line, start_col);
+                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_TACK_RANGLE, "->",
+                                                       start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
                 } else {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_TACK, "-", start_line, start_col);
+                    volt_token_t* token =
+                        create_token(lexer, VOLT_TOKEN_TYPE_TACK, "-", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position++;
                     lexer->current_column++;
@@ -316,12 +343,14 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
 
             case '*': {
                 if (next_char == '=') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_STAR_EQUAL, "*=", start_line, start_col);
+                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_STAR_EQUAL,
+                                                       "*=", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
                 } else {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_STAR, "*", start_line, start_col);
+                    volt_token_t* token =
+                        create_token(lexer, VOLT_TOKEN_TYPE_STAR, "*", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position++;
                     lexer->current_column++;
@@ -331,7 +360,8 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
 
             case '/': {
                 if (next_char == '=') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_SLASH_EQUAL, "/=", start_line, start_col);
+                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_SLASH_EQUAL,
+                                                       "/=", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
@@ -366,7 +396,8 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
                         }
                     }
                 } else {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_SLASH, "/", start_line, start_col);
+                    volt_token_t* token =
+                        create_token(lexer, VOLT_TOKEN_TYPE_SLASH, "/", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position++;
                     lexer->current_column++;
@@ -376,17 +407,20 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
 
             case '=': {
                 if (next_char == '=') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_EQUAL_EQUAL, "==", start_line, start_col);
+                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_EQUAL_EQUAL,
+                                                       "==", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
                 } else if (next_char == '>') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_EQUAL_RANGLE, "=>", start_line, start_col);
+                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_EQUAL_RANGLE, "=>",
+                                                       start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
                 } else {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_EQUAL, "=", start_line, start_col);
+                    volt_token_t* token =
+                        create_token(lexer, VOLT_TOKEN_TYPE_EQUAL, "=", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position++;
                     lexer->current_column++;
@@ -396,12 +430,14 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
 
             case '%': {
                 if (next_char == '=') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_PERCENT_EQUAL, "%=", start_line, start_col);
+                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_PERCENT_EQUAL,
+                                                       "%=", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
                 } else {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_PERCENT, "%", start_line, start_col);
+                    volt_token_t* token =
+                        create_token(lexer, VOLT_TOKEN_TYPE_PERCENT, "%", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position++;
                     lexer->current_column++;
@@ -414,18 +450,21 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
                     /* .. or ..= */
                     if (lexer->current_position + 2 < lexer->input_stream_length &&
                         lexer->input_stream[lexer->current_position + 2] == '=') {
-                        volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_DOT_DOT_EQUAL, "..=", start_line, start_col);
+                        volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_DOT_DOT_EQUAL,
+                                                           "..=", start_line, start_col);
                         volt_vector_push_back(&lexer->tokens, token);
                         lexer->current_position += 3;
                         lexer->current_column += 3;
                     } else {
-                        volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_DOT_DOT, "..", start_line, start_col);
+                        volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_DOT_DOT, "..",
+                                                           start_line, start_col);
                         volt_vector_push_back(&lexer->tokens, token);
                         lexer->current_position += 2;
                         lexer->current_column += 2;
                     }
                 } else {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_DOT, ".", start_line, start_col);
+                    volt_token_t* token =
+                        create_token(lexer, VOLT_TOKEN_TYPE_DOT, ".", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position++;
                     lexer->current_column++;
@@ -435,12 +474,14 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
 
             case ':': {
                 if (next_char == ':') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_COLON_COLON, "::", start_line, start_col);
+                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_COLON_COLON,
+                                                       "::", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
                 } else {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_COLON, ":", start_line, start_col);
+                    volt_token_t* token =
+                        create_token(lexer, VOLT_TOKEN_TYPE_COLON, ":", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position++;
                     lexer->current_column++;
@@ -449,7 +490,8 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
             }
 
             case '(': {
-                volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_LPAREN, "(", start_line, start_col);
+                volt_token_t* token =
+                    create_token(lexer, VOLT_TOKEN_TYPE_LPAREN, "(", start_line, start_col);
                 volt_vector_push_back(&lexer->tokens, token);
                 lexer->current_position++;
                 lexer->current_column++;
@@ -457,7 +499,8 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
             }
 
             case ')': {
-                volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_RPAREN, ")", start_line, start_col);
+                volt_token_t* token =
+                    create_token(lexer, VOLT_TOKEN_TYPE_RPAREN, ")", start_line, start_col);
                 volt_vector_push_back(&lexer->tokens, token);
                 lexer->current_position++;
                 lexer->current_column++;
@@ -465,7 +508,8 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
             }
 
             case '{': {
-                volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_LBRACE, "{", start_line, start_col);
+                volt_token_t* token =
+                    create_token(lexer, VOLT_TOKEN_TYPE_LBRACE, "{", start_line, start_col);
                 volt_vector_push_back(&lexer->tokens, token);
                 lexer->current_position++;
                 lexer->current_column++;
@@ -473,7 +517,8 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
             }
 
             case '}': {
-                volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_RBRACE, "}", start_line, start_col);
+                volt_token_t* token =
+                    create_token(lexer, VOLT_TOKEN_TYPE_RBRACE, "}", start_line, start_col);
                 volt_vector_push_back(&lexer->tokens, token);
                 lexer->current_position++;
                 lexer->current_column++;
@@ -481,7 +526,8 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
             }
 
             case '[': {
-                volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_LBRACKET, "[", start_line, start_col);
+                volt_token_t* token =
+                    create_token(lexer, VOLT_TOKEN_TYPE_LBRACKET, "[", start_line, start_col);
                 volt_vector_push_back(&lexer->tokens, token);
                 lexer->current_position++;
                 lexer->current_column++;
@@ -489,7 +535,8 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
             }
 
             case ']': {
-                volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_RBRACKET, "]", start_line, start_col);
+                volt_token_t* token =
+                    create_token(lexer, VOLT_TOKEN_TYPE_RBRACKET, "]", start_line, start_col);
                 volt_vector_push_back(&lexer->tokens, token);
                 lexer->current_position++;
                 lexer->current_column++;
@@ -500,23 +547,28 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
                 if (next_char == '<') {
                     if (lexer->current_position + 2 < lexer->input_stream_length &&
                         lexer->input_stream[lexer->current_position + 2] == '=') {
-                        volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_LANGLE_LANGLE_EQUAL, "<<=", start_line, start_col);
+                        volt_token_t* token =
+                            create_token(lexer, VOLT_TOKEN_TYPE_LANGLE_LANGLE_EQUAL,
+                                         "<<=", start_line, start_col);
                         volt_vector_push_back(&lexer->tokens, token);
                         lexer->current_position += 3;
                         lexer->current_column += 3;
                     } else {
-                        volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_LANGLE_LANGLE, "<<", start_line, start_col);
+                        volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_LANGLE_LANGLE,
+                                                           "<<", start_line, start_col);
                         volt_vector_push_back(&lexer->tokens, token);
                         lexer->current_position += 2;
                         lexer->current_column += 2;
                     }
                 } else if (next_char == '=') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_LANGLE_EQUAL, "<=", start_line, start_col);
+                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_LANGLE_EQUAL,
+                                                       "<=", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
                 } else {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_LANGLE, "<", start_line, start_col);
+                    volt_token_t* token =
+                        create_token(lexer, VOLT_TOKEN_TYPE_LANGLE, "<", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position++;
                     lexer->current_column++;
@@ -528,23 +580,28 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
                 if (next_char == '>') {
                     if (lexer->current_position + 2 < lexer->input_stream_length &&
                         lexer->input_stream[lexer->current_position + 2] == '=') {
-                        volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_RANGLE_RANGLE_EQUAL, ">>=", start_line, start_col);
+                        volt_token_t* token =
+                            create_token(lexer, VOLT_TOKEN_TYPE_RANGLE_RANGLE_EQUAL,
+                                         ">>=", start_line, start_col);
                         volt_vector_push_back(&lexer->tokens, token);
                         lexer->current_position += 3;
                         lexer->current_column += 3;
                     } else {
-                        volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_RANGLE_RANGLE, ">>", start_line, start_col);
+                        volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_RANGLE_RANGLE,
+                                                           ">>", start_line, start_col);
                         volt_vector_push_back(&lexer->tokens, token);
                         lexer->current_position += 2;
                         lexer->current_column += 2;
                     }
                 } else if (next_char == '=') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_RANGLE_EQUAL, ">=", start_line, start_col);
+                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_RANGLE_EQUAL,
+                                                       ">=", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
                 } else {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_RANGLE, ">", start_line, start_col);
+                    volt_token_t* token =
+                        create_token(lexer, VOLT_TOKEN_TYPE_RANGLE, ">", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position++;
                     lexer->current_column++;
@@ -553,7 +610,8 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
             }
 
             case '@': {
-                volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_AT, "@", start_line, start_col);
+                volt_token_t* token =
+                    create_token(lexer, VOLT_TOKEN_TYPE_AT, "@", start_line, start_col);
                 volt_vector_push_back(&lexer->tokens, token);
                 lexer->current_position++;
                 lexer->current_column++;
@@ -562,12 +620,14 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
 
             case '!': {
                 if (next_char == '=') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_BANG_EQUAL, "!=", start_line, start_col);
+                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_BANG_EQUAL,
+                                                       "!=", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
                 } else {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_BANG, "!", start_line, start_col);
+                    volt_token_t* token =
+                        create_token(lexer, VOLT_TOKEN_TYPE_BANG, "!", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position++;
                     lexer->current_column++;
@@ -576,7 +636,8 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
             }
 
             case '#': {
-                volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_HASH, "#", start_line, start_col);
+                volt_token_t* token =
+                    create_token(lexer, VOLT_TOKEN_TYPE_HASH, "#", start_line, start_col);
                 volt_vector_push_back(&lexer->tokens, token);
                 lexer->current_position++;
                 lexer->current_column++;
@@ -585,12 +646,14 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
 
             case '^': {
                 if (next_char == '=') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_CARET_EQUAL, "^=", start_line, start_col);
+                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_CARET_EQUAL,
+                                                       "^=", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
                 } else {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_CARET, "^", start_line, start_col);
+                    volt_token_t* token =
+                        create_token(lexer, VOLT_TOKEN_TYPE_CARET, "^", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position++;
                     lexer->current_column++;
@@ -600,12 +663,14 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
 
             case '~': {
                 if (next_char == '=') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_TILDE_EQUAL, "~=", start_line, start_col);
+                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_TILDE_EQUAL,
+                                                       "~=", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
                 } else {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_TILDE, "~", start_line, start_col);
+                    volt_token_t* token =
+                        create_token(lexer, VOLT_TOKEN_TYPE_TILDE, "~", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position++;
                     lexer->current_column++;
@@ -615,17 +680,20 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
 
             case '&': {
                 if (next_char == '&') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_AMPERSAND_AMPERSAND, "&&", start_line, start_col);
+                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_AMPERSAND_AMPERSAND,
+                                                       "&&", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
                 } else if (next_char == '=') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_AMPERSAND_EQUAL, "&=", start_line, start_col);
+                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_AMPERSAND_EQUAL,
+                                                       "&=", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
                 } else {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_AMPERSAND, "&", start_line, start_col);
+                    volt_token_t* token =
+                        create_token(lexer, VOLT_TOKEN_TYPE_AMPERSAND, "&", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position++;
                     lexer->current_column++;
@@ -635,17 +703,20 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
 
             case '|': {
                 if (next_char == '|') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_BAR_BAR, "||", start_line, start_col);
+                    volt_token_t* token =
+                        create_token(lexer, VOLT_TOKEN_TYPE_BAR_BAR, "||", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
                 } else if (next_char == '=') {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_BAR_EQUAL, "|=", start_line, start_col);
+                    volt_token_t* token =
+                        create_token(lexer, VOLT_TOKEN_TYPE_BAR_EQUAL, "|=", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position += 2;
                     lexer->current_column += 2;
                 } else {
-                    volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_BAR, "|", start_line, start_col);
+                    volt_token_t* token =
+                        create_token(lexer, VOLT_TOKEN_TYPE_BAR, "|", start_line, start_col);
                     volt_vector_push_back(&lexer->tokens, token);
                     lexer->current_position++;
                     lexer->current_column++;
@@ -654,7 +725,8 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
             }
 
             case ',': {
-                volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_COMMA, ",", start_line, start_col);
+                volt_token_t* token =
+                    create_token(lexer, VOLT_TOKEN_TYPE_COMMA, ",", start_line, start_col);
                 volt_vector_push_back(&lexer->tokens, token);
                 lexer->current_position++;
                 lexer->current_column++;
@@ -662,7 +734,8 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
             }
 
             case ';': {
-                volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_SEMICOLON, ";", start_line, start_col);
+                volt_token_t* token =
+                    create_token(lexer, VOLT_TOKEN_TYPE_SEMICOLON, ";", start_line, start_col);
                 volt_vector_push_back(&lexer->tokens, token);
                 lexer->current_position++;
                 lexer->current_column++;
@@ -670,7 +743,8 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
             }
 
             case '?': {
-                volt_token_t* token = create_token(lexer, VOLT_TOKEN_TYPE_QUESTION, "?", start_line, start_col);
+                volt_token_t* token =
+                    create_token(lexer, VOLT_TOKEN_TYPE_QUESTION, "?", start_line, start_col);
                 volt_vector_push_back(&lexer->tokens, token);
                 lexer->current_position++;
                 lexer->current_column++;
@@ -679,14 +753,16 @@ volt_status_code_t volt_lexer_lex(volt_lexer_t* lexer) {
 
             default: {
                 if (is_alpha(current_char)) {
-                    /* token_identifier consumes characters and advances lexer->current_position/column */
+                    /* token_identifier consumes characters and advances
+                     * lexer->current_position/column */
                     volt_token_t* token = token_identifier(lexer);
                     volt_vector_push_back(&lexer->tokens, token);
                 } else if (is_digit(current_char)) {
                     volt_token_t* token = token_number(lexer);
                     volt_vector_push_back(&lexer->tokens, token);
                 } else if (current_char == '"' || current_char == '\'') {
-                    /* consume opening quote then let token_string handle the content+closing quote */
+                    /* consume opening quote then let token_string handle the content+closing quote
+                     */
                     char quote_type = current_char;
                     lexer->current_position++;
                     lexer->current_column++;
